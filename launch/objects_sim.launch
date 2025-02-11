@@ -1,0 +1,23 @@
+<launch>
+
+  <!-- Config Default Scripts and Nodes, DO NOT EDIT ! -->
+    <arg name="model" default="dofbot_with_line.urdf"/>
+    <arg name="gui" default="false"/>
+    <param name="robot_description" command="$(find xacro)/xacro --inorder $(find dofbot_moveit)/urdf/$(arg model)"/>
+    <param name="use_gui" value="$(arg gui)"/>
+  <!-- Default/ -->
+
+
+  <!-- Make and Visulize Objects (3 objects) -->
+    <node name="generated_objs_publisher" pkg="dofbot_moveit" type="generate_random_objs"/>
+  <!-- Objects/ -->
+  
+  
+  <!-- Config Default Scripts and Nodes, DO NOT EDIT ! -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/>
+    <!--<node name="tf_broadcaster_node" pkg="dofbot_moveit" type="tf_broadcaster.py"/>-->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find dofbot_moveit)/rviz/dofbot.rviz" required="true"/>
+  <!-- Default/ -->
+  
+</launch>
