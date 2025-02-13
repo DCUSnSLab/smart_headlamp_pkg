@@ -23,6 +23,7 @@ def rotate_pitch_negative_90(coord: list) -> list:
 	rotated = rotation_matrix @ original
 	return rotated.tolist()
 
+
 def calculate_xy_angle(coord1: float, coord2: float) -> float:
 	if coord1 >= -0.05 and coord1 <= 0.05:
 		return 0.0
@@ -33,6 +34,7 @@ def calculate_xy_angle(coord1: float, coord2: float) -> float:
 		else:
 			return 1.57 + atan(slope)
 			
+
 def calculate_yz_angle(y: float, z: float) -> float:
 	m = float(y / (((y ** 2) + (z ** 2)) ** 0.5))
 	if acos(m) > 0.0: angle = -1.57 + acos(m)
@@ -44,6 +46,7 @@ def calculate_yz_angle(y: float, z: float) -> float:
 		angle = 1.56
 	return angle
 			
+
 def draw_line(p: Point) -> Marker:
 	line = Marker()
 	line.header.frame_id = "base_link"
@@ -72,6 +75,7 @@ def draw_line(p: Point) -> Marker:
 	
 	return line
 
+
 def object_callback(msg: Object):
 	rate = rospy.Rate(15)
 	guide_pub = rospy.Publisher('guide_line', Marker, queue_size=1)
@@ -98,6 +102,7 @@ def object_callback(msg: Object):
 	guide_pub.publish(draw_line(pnt))	#msg.points[0]
 	angle_pub.publish(angle)
 	rate.sleep()
+	
 	
 if __name__ == '__main__':
 	rospy.init_node('calculate_servo_angle')
