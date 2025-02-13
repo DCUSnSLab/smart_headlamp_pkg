@@ -26,6 +26,7 @@ def calculate_xy_angle(coord1: float, coord2: float) -> float:
 		else:
 			return 1.57 + atan(slope)
 			
+
 def calculate_yz_angle(y: float, z: float) -> float:
 	m = float(y / (((y ** 2) + (z ** 2)) ** 0.5))
 	if acos(m) > 0.0: angle = -1.57 + acos(m)
@@ -37,6 +38,7 @@ def calculate_yz_angle(y: float, z: float) -> float:
 		angle = 1.56
 	return angle
 			
+
 def draw_line(p: Point) -> Marker:
 	line = Marker()
 	line.header.frame_id = "base_link"
@@ -64,6 +66,7 @@ def draw_line(p: Point) -> Marker:
 	line.points.append(end_point)
 	
 	return line
+
 
 def object_callback(msg):
 
@@ -97,6 +100,7 @@ def object_callback(msg):
 	guide_pub.publish(draw_line(pnt))	#msg.points[0]
 	angle_pub.publish(angle)
 	rate.sleep()
+	
 	
 if __name__ == '__main__':
 	rospy.init_node('calculate_servo_angle')
