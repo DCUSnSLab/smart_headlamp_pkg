@@ -76,8 +76,8 @@ def draw_line(p: Point) -> Marker:
 	return line
 
 
-def object_callback(msg: Object):
-	rate = rospy.Rate(15)
+def target_callback(msg: Object):
+	rate = rospy.Rate(10)
 	guide_pub = rospy.Publisher('guide_line', Marker, queue_size=1)
 	
 	angle_pub = rospy.Publisher('joint_states', JointState, queue_size=1)
@@ -105,6 +105,6 @@ def object_callback(msg: Object):
 	
 	
 if __name__ == '__main__':
-	rospy.init_node('calculate_servo_angle')
-	subscriber = rospy.Subscriber('/headlamp/target_object', Object, object_callback) 
+	rospy.init_node('calculate_angle')
+	subscriber = rospy.Subscriber('/headlamp/target_object', Object, target_callback) 
 	rospy.spin()
