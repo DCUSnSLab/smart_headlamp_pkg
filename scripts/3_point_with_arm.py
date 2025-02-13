@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 
 import rospy
-from math import pi
+import math
 import Arm_Lib
 from sensor_msgs.msg import JointState
 
 
-RA2DE = 180.00 / pi
+SERVO_1 = 0
+SERVO_2 = 1
+sbus = Arm_Lib.Arm_Device()
 
 
-def joint_states_callback(msg):
-	joints = [0.0, 0.0]
-	joints[0] = (msg.position[0] * RA2DE + 90)
-	joints[1] = (msg.position[1] * RA2DE + 90)
-	sbus.Arm_serial_servo_write(1, joints[0], 10)
-	sbus.Arm_serial_servo_write(2, joints[1], 10)
-	print(f'> joint 1 : {joints[0]} degree\n> joint 2 : {joints[1]} degree')
+def angle_callback(msg: JointState) -> None:
+	"""
+	전달받은 각 서보모터의 회전 각도만큼 실제 서보모터를 움직이는 함수
+	"""
+	servo_angle_list = [math.degrees(msg.position[SERVO_1]), math.degrees(msg.position[SERVO_2])]
+	sbus.Arm_serial_servo_write(1, servo_angle_list[SERVO_1], 10)
+	sbus.Arm_serial_servo_write(2, servo_angle_list[SERVO_2], 10)
+	rospy.loginfo(f'*** 3_point_with_arm\t>> Servo write(DE) : {servo_angle_list}')
 
 
 if __name__ == '__main__':
-	sbus = Arm_Lib.Arm_Device()
 	rospy.init_node("point_with_arm")
-	subscriber = rospy.Subscriber("/joint_states", JointState, joint_states_callback)
+	subscriber = rospy.Subscriber("/joint_states", JointState, angle_callback)
 	rospy.spin()
