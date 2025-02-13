@@ -55,7 +55,7 @@ def get_nearest_obj(objs: list) -> Object:
 
 
 
-def objects_callback(msg: ObjectsStamped):
+def objects_callback(msg: ObjectsStamped) -> None:
 	"""
 	카메라가 인식한 객체 정보를 받아 차와의 거리 또는 직전의 타겟을 근거로 타겟을 설정하고 타겟 객체의 정보를 발행하는 함수
 	"""
