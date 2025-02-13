@@ -3,6 +3,9 @@
 import math
 import rospy
 from zed_interfaces.msg import ObjectsStamped, Object
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point
+from std_msgs.msg import ColorRGBA
 
 
 X = 0
@@ -54,10 +57,40 @@ def get_nearest_obj(objs: list) -> Object:
 	return nearest_obj
 
 
+def draw_line(p: Point) -> Marker:
+	"""
+	3차원 공간 상의 한 점과 원점 (0,0,0)을 잇는 가이드선을 시각화하기 위해 직선 마커를 만드는 함수
+	"""
+	line = Marker()
+	line.header.frame_id = "base_link"
+	line.header.stamp = rospy.Time.now()
+	line.ns = 'guide_line'
+	line.id = 0
+	line.type = Marker.ARROW
+	line.action = Marker.ADD
+	line.scale.x = 0.02
+	line.scale.y = 0.05
+	line.scale.z = 0.1
+	line.color = ColorRGBA(0.0, 1.0, 0.0, 0.5)	
+	
+	start_point = Point()
+	start_point.x = 0.0
+	start_point.y = 0.0
+	start_point.z = 0.107
+	line.points.append(start_point)
+
+	end_point = Point()
+	end_point.x = p.x
+	end_point.y = p.y
+	end_point.z = p.z
+	line.points.append(end_point)
+
+	return line
+
 
 def objects_callback(msg: ObjectsStamped) -> None:
 	"""
-	카메라가 인식한 객체 정보를 받아 차와의 거리 또는 직전의 타겟을 근거로 타겟을 설정하고 타겟 객체의 정보를 발행하는 함수
+	카메라가 인식한 객체 정보를 받아 차와의 거리 또는 직전의 타겟을 근거로 타겟을 설정하고 타겟 객체의 정보 및 가이드선을 발행하는 함수
 	"""
 	global g_tgt_id
 	objs_list = msg.objects
@@ -73,6 +106,13 @@ def objects_callback(msg: ObjectsStamped) -> None:
 		target = get_nearest_obj(objs_list)
 		g_tgt_id = target.instance_id
 
+	guide_pub = rospy.Publisher('/headlamp/target_object/guide_line', Marker, queue_size=1)
+	pnt = Point()
+	pnt.x = target.position[X]
+	pnt.y = target.position[Y]
+	pnt.z = target.position[Z]
+
+	guide_pub.publish(draw_line(pnt))
 	tgt_pub.publish(target)
 	rate.sleep()
 	
