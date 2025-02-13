@@ -50,7 +50,7 @@ def get_nearest_obj(objs: list) -> Object:
 			nearest_obj = obj
 
 	if nearest_obj:
-		rospy.loginfo(f'>> Target Object id : {nearest_obj}, Distance : {min_distance}')
+		rospy.loginfo(f'>> Target Object id : {nearest_obj.instance_id}, Distance : {min_distance}')
 	return nearest_obj
 
 
@@ -60,17 +60,17 @@ def objects_callback(msg: ObjectsStamped) -> None:
 	카메라가 인식한 객체 정보를 받아 차와의 거리 또는 직전의 타겟을 근거로 타겟을 설정하고 타겟 객체의 정보를 발행하는 함수
 	"""
 	global g_tgt_id
-	objects_list = msg.objects
-	id_list = [obj.instance_id for obj in objects_list]
+	objs_list = msg.objects
+	id_list = [obj.instance_id for obj in objs_list]
 	target = None
 	tgt_pub = rospy.Publisher('/headlamp/target_object', Object, queue_size=1)
 	rate = rospy.Rate(10)
 	
 	if g_tgt_id in id_list:	# 타겟이 시야 범위 안에 계속 존재하는 경우
-		target = get_obj_by_id(objects_list, g_tgt_id)
+		target = get_obj_by_id(objs_list, g_tgt_id)
 	else:
 		## 타겟이 정해지지 않았거나 타겟이 시야에서 사라진 경우
-		target = get_nearest_obj(objects_list)
+		target = get_nearest_obj(objs_list)
 		g_tgt_id = target.instance_id
 
 	tgt_pub.publish(target)
