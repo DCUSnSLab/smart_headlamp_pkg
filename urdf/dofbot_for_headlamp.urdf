@@ -9,7 +9,7 @@
                     <!-- rpy="0 0 0" -->
             <geometry>
             	<!--<box size="0.1 0.1 0.1"/>-->
-                <mesh filename="package://dofbot_moveit/meshes/base_link.STL"/>
+                <mesh filename="package://smart_headlamp_pkg/meshes/base_link.STL"/>
             </geometry>
             <material
                     name="">
@@ -24,14 +24,15 @@
                     <!-- rpy="0 0 0" -->
             <geometry>
             	<!--<box size="0.1 0.1 0.1"/>-->
-                <mesh filename="package://dofbot_moveit/meshes/base_link.STL"/>
+                <mesh filename="package://smart_headlamp_pkg/meshes/base_link.STL"/>
             </geometry>
         </collision>
     </link>
     <joint name="base_link_to_dofbot_base_link" type="fixed">
         <parent link="base_link"/>
         <child link="dofbot_base_link"/>
-        <origin xyz="0 0 0" rpy="1.5708 0 1.5708"/>
+        <!--<origin xyz="0 0 0" rpy="0 1.5708 0"/>-->
+        <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
     </joint>
     <link name="link1">
         <visual>
@@ -40,7 +41,7 @@
                     rpy="0 0 0"/>
             <geometry>
             	<!--<box size="0.01 0.01 0.01"/>-->
-                <mesh filename="package://dofbot_moveit/meshes/link1.STL"/>
+                <mesh filename="package://smart_headlamp_pkg/meshes/link1.STL"/>
             </geometry>
             <material
                     name="">
@@ -54,7 +55,7 @@
                     rpy="0 0 0"/>
             <geometry>
             	<!--<box size="0.01 0.01 0.01"/>-->
-                <mesh filename="package://dofbot_moveit/meshes/link1.STL"/>
+                <mesh filename="package://smart_headlamp_pkg/meshes/link1.STL"/>
             </geometry>
         </collision>
     </link>
@@ -81,7 +82,7 @@
                     rpy="0 0 0"/>
             <geometry>
                 <mesh
-                        filename="package://dofbot_moveit/meshes/link2.STL"/>
+                        filename="package://smart_headlamp_pkg/meshes/link2.STL"/>
             </geometry>
             <material
                     name="">
@@ -95,7 +96,7 @@
                     rpy="0 0 0"/>
             <geometry>
                 <mesh
-                        filename="package://dofbot_moveit/meshes/link2.STL"/>
+                        filename="package://smart_headlamp_pkg/meshes/link2.STL"/>
             </geometry>
         </collision>
     </link>

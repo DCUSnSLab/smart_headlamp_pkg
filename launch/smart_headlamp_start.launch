@@ -5,9 +5,14 @@
 	<arg name="gui" default="false"/>
 	<param name="robot_description" command="$(find xacro)/xacro --inorder $(find smart_headlamp_pkg)/urdf/$(arg model)"/>
 	<param name="use_gui" value="$(arg gui)"/>
-	
-    <!-- Turn On Merged RViz -->
+
+	<!-- Custom Node Start -->
+	<node name="select_target" pkg="smart_headlamp_pkg" type="1_select_target.py" output="screen"/>
+	<node name="calculate_angle" pkg="smart_headlamp_pkg" type="2_calculate_angle.py" output="screen"/>
+	<node name="point_with_arm" pkg="smart_headlamp_pkg" type="3_point_with_arm.py" output="screen"/>
+
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-	<node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/>
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find smart_headlamp_pkg)/rviz/smart_headlamp.rviz" output="screen" />
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+    <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find smart_headlamp_pkg)/rviz/smart_headlamp.rviz" output="screen" />-->
+
 </launch>
