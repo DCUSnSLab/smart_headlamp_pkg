@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import math
 import rospy
 from zed_interfaces.msg import ObjectsStamped, Object
 
@@ -7,15 +8,70 @@ from zed_interfaces.msg import ObjectsStamped, Object
 X = 0
 Y = 1
 Z = 2
+EGO_POSITION = (0, 0, 0)
+g_tgt_id = -1	## id는 Object의 필드 instance_id를 의미
+
+
+def get_obj_by_id(objs: list, id: int) -> Object:
+	"""Object 리스트에서 특정 instance_id에 해당하는 객체를 반환하는 함수
+	
+	Parameters
+	----------
+	objs
+		탐색할 객체의 전체 목록(Object[] 리스트)
+	id
+		탐색할 id
+
+	"""
+	for obj in objs:
+		if obj.instance_id == id:
+			return obj
+	return None
+
+
+def get_nearest_obj(objs: list) -> Object:
+	"""Object 리스트에서 기준 좌표(EGO_POSITION)와 가장 가까운 객체를 반환하는 함수
+
+	Parameters
+	----------
+	objs
+		거리를 계산할 객체의 전체 목록(Object[] 리스트)
+
+	"""
+	nearest_obj = None
+	min_distance = float('inf')
+	
+	for obj in objs:
+		obj_position = (obj.position[0], obj.position[1], obj.position[2])
+		distance = math.sqrt(sum((ego - obj) ** 2 for ego, obj in zip(EGO_POSITION, obj_position)))
+
+		if distance < min_distance:
+			min_distance = distance
+			nearest_obj = obj
+
+	if nearest_obj:
+		rospy.loginfo(f'>> Target Object id : {nearest_obj}, Distance : {min_distance}')
+	return nearest_obj
+
 
 
 def objects_callback(msg: ObjectsStamped):
-	rate = rospy.Rate(10)
+	"""
+	카메라가 인식한 객체 정보를 받아 차와의 거리 또는 직전의 타겟을 근거로 타겟을 설정하고 타겟 객체의 정보를 발행하는 함수
+	"""
+	global g_tgt_id
+	objects_list = msg.objects
+	id_list = [obj.instance_id for obj in objects_list]
+	target = None
 	tgt_pub = rospy.Publisher('/headlamp/target_object', Object, queue_size=1)
-
-	target = Object()
-
-	## Filter target from object list
+	rate = rospy.Rate(10)
+	
+	if g_tgt_id in id_list:	# 타겟이 시야 범위 안에 계속 존재하는 경우
+		target = get_obj_by_id(objects_list, g_tgt_id)
+	else:
+		## 타겟이 정해지지 않았거나 타겟이 시야에서 사라진 경우
+		target = get_nearest_obj(objects_list)
+		g_tgt_id = target.instance_id
 
 	tgt_pub.publish(target)
 	rate.sleep()
