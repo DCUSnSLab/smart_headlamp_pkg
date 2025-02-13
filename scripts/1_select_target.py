@@ -53,7 +53,7 @@ def get_nearest_obj(objs: list) -> Object:
 			nearest_obj = obj
 
 	if nearest_obj:
-		rospy.loginfo(f'>> Target Object id : {nearest_obj.instance_id}, Distance : {min_distance}')
+		rospy.loginfo(f'* 1_select_target\t>> Target Object id : {nearest_obj.instance_id}, Distance : {min_distance}')
 	return nearest_obj
 
 

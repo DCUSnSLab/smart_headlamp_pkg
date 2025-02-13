@@ -25,17 +25,15 @@ def rotate_pitch_negative_90(coord: list) -> list:
 	orig = np.array(coord)
 	rotated = rotation_matrix @ orig
 
-	rospy.loginfo(f'>> Target position : {coord} -> {rotated.tolist()}')
+	rospy.loginfo(f'** 2_calculate_angle\t>> Target position : {coord} -> {rotated.tolist()}')
 	return rotated.tolist()
 
 
 def calculate_slope_to_degree(a: float, b: float) -> float:
 	"""
-	원점 (0,0)과 점 (a,b)를 잇는 직선의 기울기를 degree(도) 단위로 계산하는 함수
+	원점 (0,0)과 점 (a,b)를 잇는 직선의 기울기를 라디안 단위로 계산하는 함수
 	"""
-	angle_rad = math.atan2(b, a)
-	angle_deg = math.degrees(angle_rad)
-	return angle_deg
+	return math.atan2(b, a)
 
 
 def target_callback(msg: Object) -> None:
@@ -43,10 +41,10 @@ def target_callback(msg: Object) -> None:
 	타겟 객체의 위치 정보를 토대로 각 서보모터의 회전 각도를 계산하고 발행하는 함수
 	"""
 	rotated_coord = rotate_pitch_negative_90(msg.position)
-	rate = rospy.Rate(10)
-	angle_pub = rospy.Publisher('joint_states', JointState, queue_size=1)
-
 	angle = JointState()
+	angle_pub = rospy.Publisher('joint_states', JointState, queue_size=1)
+	rate = rospy.Rate(10)
+	
 	angle.header.frame_id = ''
 	angle.header.stamp = rospy.Time.now()
 	angle.velocity = []
@@ -54,9 +52,9 @@ def target_callback(msg: Object) -> None:
 	
 	joint1 = calculate_slope_to_degree(rotated_coord[X], rotated_coord[Y])
 	joint2 = calculate_slope_to_degree(rotated_coord[Y], rotated_coord[Z])
-	angle.position = [joint1, joint2]
+	angle.position = [joint1, joint2]	# JointState의 position은 라디안 단위
 	angle.name = ['joint1', 'joint2']
-	rospy.loginfo(f'>> Joint angle : {joint1:.2f}, {joint2:.2f}')
+	rospy.loginfo(f'** 2_calculate_angle\t>> Joint angle(RA) : {joint1:.2f}, {joint2:.2f}')
 
 	angle_pub.publish(angle)
 	rate.sleep()
