@@ -8,11 +8,12 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA
 
 
+DEBUG = False	## 디버그 모드
+EGO_POSITION = (0, 0, 0)
+g_tgt_id = -1	## id는 Object의 필드 instance_id를 의미
 X = 0
 Y = 1
 Z = 2
-EGO_POSITION = (0, 0, 0)
-g_tgt_id = -1	## id는 Object의 필드 instance_id를 의미
 
 
 def get_obj_by_id(objs: list, id: int) -> Object:
@@ -51,9 +52,10 @@ def get_nearest_obj(objs: list) -> Object:
 		if distance < min_distance:
 			min_distance = distance
 			nearest_obj = obj
+	if DEBUG:
+		if nearest_obj:
+			rospy.loginfo(f'*\t>> Target Object id : {nearest_obj.instance_id}, Distance : {min_distance}')
 
-	if nearest_obj:
-		rospy.loginfo(f'* 1_select_target\t>> Target Object id : {nearest_obj.instance_id}, Distance : {min_distance}')
 	return nearest_obj
 
 
