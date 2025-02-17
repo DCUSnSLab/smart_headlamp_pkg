@@ -12,7 +12,7 @@
 	<node name="point_with_arm" pkg="smart_headlamp_pkg" type="3_point_with_arm.py" output="screen"/>
 
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
-	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
-    <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find smart_headlamp_pkg)/rviz/smart_headlamp.rviz" output="screen" />-->
+	<!--<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>-->
+    <!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(find smart_headlamp_pkg)/rviz/smart_headlamp.rviz" output="screen"/>-->
 
 </launch>
