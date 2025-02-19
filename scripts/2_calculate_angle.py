@@ -9,10 +9,10 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import JointState
 
-NORM_DEBUG = False
+NORM_DEBUG = True
 DEBUG = True	## 디버그 모드
-TEST = False		## 테스트 모드
-TEST_COORD = [1.0, -2.0, 1.0]
+TEST = True		## 테스트 모드
+TEST_COORD = [0, 0, 5]
 JOINT1 = 0
 JOINT2 = 1
 X = 0
@@ -128,7 +128,7 @@ def make_test_point_marker(coord: list) -> Marker:
 	테스트 모드에서 테스트 좌표를 마커(점)으로 반환하는 함수
 	"""
 	marker = Marker()
-	marker.header.frame_id = "map"
+	marker.header.frame_id = "base_link"
 	marker.header.stamp = rospy.Time.now()
 	marker.ns = "test_coord"
 	marker.id = 0
@@ -136,8 +136,8 @@ def make_test_point_marker(coord: list) -> Marker:
 	marker.action = Marker.ADD
 	
 	marker.color = ColorRGBA(1.0, 0.0, 0.0, 1.0)
-	marker.scale.x = 0.5
-	marker.scale.y = 0.5
+	marker.scale.x = 0.1
+	marker.scale.y = 0.1
 
 	point = Point()
 	point.x = coord[X]
@@ -161,10 +161,10 @@ def target_callback(msg: Object) -> None:
 
 	if TEST:
 		marker_pub = rospy.Publisher('/headlamp/test_coord', Marker, queue_size=10)
-		TEST_COORD[X] += 0.0015
-		TEST_COORD[Y] += 0.0015
-		TEST_COORD[Z] -= 0.0015
-		TEST_COORD = [3, -2, 5]
+		TEST_COORD[X] += 0.05
+		#TEST_COORD[Y] -= 0.01
+		TEST_COORD[Z] -= 0.3
+		#TEST_COORD = [3, -2, 5]
 		marker = make_test_point_marker(TEST_COORD)
 		coord_for_servo1 = rotate_coord_for_servo1(TEST_COORD)
 		coord_for_servo2 = rotate_coord_for_servo2(coord_for_servo1)
@@ -191,9 +191,10 @@ def target_callback(msg: Object) -> None:
 
 	# math.atan2(y, x) 함수가 반환하는 값의 범위는 -pi와 pi 사이
 	joint1 = math.atan2(-coord_for_servo1[X], coord_for_servo1[Y])
-	joint2 = math.atan2(-coord_for_servo2[Y], -coord_for_servo2[X])
+	joint2 = -math.atan2(-coord_for_servo2[Y], -coord_for_servo2[X])
+	if coord_for_servo1[Y] > 0:	# 목표가 (차를 기준으로) 바닥보다 밑에 있는 경우
+		joint2 *= -1
 	angle.position = normalize_radian_angle_for_servo(joint1, joint2)	# JointState의 position은 라디안 단위
-	angle.position[JOINT2] *= -1
 	angle.name = ['joint1', 'joint2']
 
 	if DEBUG:
