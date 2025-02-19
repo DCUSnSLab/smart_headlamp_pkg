@@ -12,8 +12,11 @@ if __name__ == '__main__':
 	while servo != 0:
 		servo = int(input(">> servo : "))
 		if servo == 0: break
-		angle = int(input(">> angle : "))
-		sbus.Arm_serial_servo_write(servo, angle, 100)
+		angle_r = float(input(">> angle(RA) : "))
+		angle_d = math.degrees(angle_r)
+		print(f'Degree == {angle_d:.4f}')
+		sbus.Arm_serial_servo_write(servo, angle_d, 100)
+		print()
 
 
 	#while ans != '0':
