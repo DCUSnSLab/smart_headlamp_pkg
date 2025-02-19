@@ -12,7 +12,7 @@ from sensor_msgs.msg import JointState
 NORM_DEBUG = True
 DEBUG = True	## 디버그 모드
 TEST = True		## 테스트 모드
-TEST_COORD = [0, 0, 5]
+TEST_COORD = [0, -5, 3]
 JOINT1 = 0
 JOINT2 = 1
 X = 0
@@ -161,9 +161,9 @@ def target_callback(msg: Object) -> None:
 
 	if TEST:
 		marker_pub = rospy.Publisher('/headlamp/test_coord', Marker, queue_size=10)
-		TEST_COORD[X] += 0.05
-		#TEST_COORD[Y] -= 0.01
-		TEST_COORD[Z] -= 0.3
+		TEST_COORD[X] += 0.001
+		TEST_COORD[Y] += 0.025
+		#TEST_COORD[Z] -= 0.3
 		#TEST_COORD = [3, -2, 5]
 		marker = make_test_point_marker(TEST_COORD)
 		coord_for_servo1 = rotate_coord_for_servo1(TEST_COORD)
