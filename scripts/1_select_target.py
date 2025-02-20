@@ -44,8 +44,9 @@ def get_nearest_obj(objs: list) -> Object:
 	"""
 	nearest_obj = None
 	min_distance = float('inf')
+	person_objs = [obj for obj in objs if obj.label == "Person"]
 	
-	for obj in objs:
+	for obj in person_objs:
 		obj_position = (obj.position[0], obj.position[1], obj.position[2])
 		distance = math.sqrt(sum((ego - obj) ** 2 for ego, obj in zip(EGO_POSITION, obj_position)))
 
