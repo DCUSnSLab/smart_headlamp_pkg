@@ -17,7 +17,8 @@ Z = 2
 
 
 def get_obj_by_id(objs: list, id: int) -> Object:
-	"""Object 리스트에서 특정 instance_id에 해당하는 객체를 반환하는 함수
+	"""
+	Object 리스트에서 특정 instance_id에 해당하는 객체를 반환하는 함수
 	
 	Parameters
 	----------
@@ -25,7 +26,6 @@ def get_obj_by_id(objs: list, id: int) -> Object:
 		탐색할 객체의 전체 목록(Object[] 리스트)
 	id
 		탐색할 id
-
 	"""
 	for obj in objs:
 		if obj.instance_id == id:
@@ -34,19 +34,20 @@ def get_obj_by_id(objs: list, id: int) -> Object:
 
 
 def get_nearest_obj(objs: list) -> Object:
-	"""Object 리스트에서 기준 좌표(EGO_POSITION)와 가장 가까운 객체를 반환하는 함수
+	"""
+	Object 리스트에서 기준 좌표(EGO_POSITION)와 가장 가까운 객체를 반환하는 함수
 
 	Parameters
 	----------
 	objs
 		거리를 계산할 객체의 전체 목록(Object[] 리스트)
-
 	"""
 	nearest_obj = None
 	min_distance = float('inf')
-	person_objs = [obj for obj in objs if obj.label == "Person"]
+	person_objs = [obj for obj in objs if (obj.label == "Person")]	# 사람 객체만 필터링
+	front_person_objs = [h_obj for h_obj in person_objs if (h_obj.position[X] > 0 and h_obj.position[Z] > 0)]	# 차량 기준 전방(지면)에 있는 사람 객체만 필터링(X:양수, Z:양수)
 	
-	for obj in person_objs:
+	for obj in front_person_objs:
 		obj_position = (obj.position[0], obj.position[1], obj.position[2])
 		distance = math.sqrt(sum((ego - obj) ** 2 for ego, obj in zip(EGO_POSITION, obj_position)))
 
