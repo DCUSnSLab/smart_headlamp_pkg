@@ -8,7 +8,7 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA
 
 
-DEBUG = False	## 디버그 모드
+DEBUG = True	## 디버그 모드
 EGO_POSITION = (0, 0, 0)
 g_tgt_id = -1	## id는 Object의 필드 instance_id를 의미
 X = 0
@@ -45,7 +45,14 @@ def get_nearest_obj(objs: list) -> Object:
 	nearest_obj = None
 	min_distance = float('inf')
 	person_objs = [obj for obj in objs if (obj.label == "Person")]	# 사람 객체만 필터링
-	front_person_objs = [h_obj for h_obj in person_objs if (h_obj.position[X] > 0 and h_obj.position[Z] > 0)]	# 차량 기준 전방(지면)에 있는 사람 객체만 필터링(X:양수, Z:양수)
+	if DEBUG:
+		rospy.loginfo(f'*\t>> person_objs : {[obj.instance_id for obj in person_objs]}')
+		rospy.loginfo(f'*\t>> each objs position : {[obj.position for obj in person_objs]}')
+
+	#front_person_objs = [h_obj for h_obj in person_objs if (h_obj.position[X] > 0 and h_obj.position[Z] > 0)]
+	front_person_objs = [h_obj for h_obj in person_objs if (h_obj.position[X] > 0)]	# 차량 기준 전방에 있는 사람 객체만 필터링(X가 양수)
+	if DEBUG:
+		rospy.loginfo(f'*\t>> front_person_objs : {[obj.instance_id for obj in front_person_objs]}')
 	
 	for obj in front_person_objs:
 		obj_position = (obj.position[0], obj.position[1], obj.position[2])
