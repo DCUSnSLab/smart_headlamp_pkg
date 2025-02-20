@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import numpy as np
+import random as rd
 import math
 import rospy
 from std_msgs.msg import ColorRGBA
@@ -11,8 +12,8 @@ from sensor_msgs.msg import JointState
 
 NORM_DEBUG = True
 DEBUG = True	## 디버그 모드
-TEST = False	## 테스트 모드
-TEST_COORD = [1, 2, 3]
+TEST = True		## 테스트 모드
+TEST_COORD = [0, 0, 0]
 JOINT1 = 0
 JOINT2 = 1
 X = 0
@@ -186,10 +187,13 @@ def target_callback(msg: Object) -> None:
 	coord_for_car = msg.position
 
 	if TEST:
-		#TEST_COORD[X] -= 0.001
-		#TEST_COORD[Y] -= 0.025
-		#TEST_COORD[Z] -= 0.01
-		#TEST_COORD = [3, -2, 5]
+		dx = rd.randint(-5, 5) * 0.03
+		dy = rd.randint(-5, 5) * 0.03
+		dz = rd.randint(-5, 5) * 0.01
+		rospy.loginfo(f'**\t>> Random Value : dx={dx:.2f}, dy={dy:.2f}, dz={dz:.2f}')
+		TEST_COORD[X] += dx
+		TEST_COORD[Y] += dy
+		TEST_COORD[Z] += dz
 		coord_for_car = TEST_COORD
 		
 		rospy.loginfo(f'**\t>> Object position(to car) : ({TEST_COORD[X]:.2f}, {TEST_COORD[Y]:.2f}, {TEST_COORD[Z]:.2f})')
