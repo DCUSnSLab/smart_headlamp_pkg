@@ -10,9 +10,9 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import JointState
 
-NORM_DEBUG = True
-DEBUG = True	## 디버그 모드
-TEST = True		## 테스트 모드
+NORM_DEBUG = False
+DEBUG = False	## 디버그 모드
+TEST = False		## 테스트 모드
 TEST_COORD = [0, 0, 0]
 JOINT1 = 0
 JOINT2 = 1
