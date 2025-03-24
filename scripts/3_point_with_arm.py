@@ -6,7 +6,7 @@ import Arm_Lib
 from sensor_msgs.msg import JointState
 
 
-DEBUG = False	## 디버그 모드
+DEBUG = True	## 디버그 모드
 SERVO1 = 0
 SERVO2 = 1
 sbus = Arm_Lib.Arm_Device()

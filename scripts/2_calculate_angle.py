@@ -11,9 +11,18 @@ from geometry_msgs.msg import Point
 from sensor_msgs.msg import JointState
 
 NORM_DEBUG = False
-DEBUG = False	## 디버그 모드
+DEBUG = False		## 디버그 모드
+
 TEST = False		## 테스트 모드
 TEST_COORD = [0, 0, 0]
+
+LEN = 21
+CNT_Y = 0
+CNT_Z = 0
+GRAPH_X = 1.0
+GRAPH_Y = np.arange(-1.0, 1.1, 0.1)
+GRAPH_Z = np.arange(-1.0, 1.1, 0.1)
+
 JOINT1 = 0
 JOINT2 = 1
 X = 0
@@ -132,9 +141,11 @@ def normalize_radian_angle_for_servo(j1: float, j2: float, coord: list) -> list:
 		if NORM_DEBUG:
 			rospy.loginfo(f'**\t>> (1.57 < j2 <= 3.14) -> j2({normalized_angles[JOINT2]+PI:.2f}) - PI => {normalized_angles[JOINT2]:.2f}')
 
-	## Z값이 양수일 때 180도 뒤집힌 방향을 가리키는 버그 발생
+	## 180도 뒤집힌 방향을 가리키는 버그 발생
 	if g_coord[Z] > 0:
 		normalized_angles[JOINT2] *= -1
+		if NORM_DEBUG:
+			rospy.loginfo(f'**\t>> Angle2 : {-normalized_angles[JOINT2]} -> {normalized_angles[JOINT2]}')
 
 	## 서보모터 1의 회전 가능 범위인 (-half_pi ~ half_pi)를 벗어난 경우
 	# if normalized_angles[JOINT1] > HALF_PI:
@@ -182,24 +193,33 @@ def target_callback(msg: Object) -> None:
 	타겟 객체의 위치 정보를 토대로 각 서보모터의 회전 각도를 계산하고 발행하는 함수
 	"""
 	## 테스트용 코드
-	global TEST_COORD
+	global TEST, TEST_COORD, CNT_Y, CNT_Z, LEN
 
 	coord_for_car = msg.position
 
 	if TEST:
-		dx = rd.randint(-5, 5) * 0.03
-		dy = rd.randint(-5, 5) * 0.03
-		dz = rd.randint(-5, 5) * 0.01
-		rospy.loginfo(f'**\t>> Random Value : dx={dx:.2f}, dy={dy:.2f}, dz={dz:.2f}')
-		TEST_COORD[X] += dx
-		TEST_COORD[Y] += dy
-		TEST_COORD[Z] += dz
+		# dx = rd.randint(-5, 5) * 0.03
+		# dy = rd.randint(-5, 5) * 0.03
+		# dz = rd.randint(-5, 5) * 0.01
+		# rospy.loginfo(f'**\t>> Random Value : dx={dx:.2f}, dy={dy:.2f}, dz={dz:.2f}')
+		# TEST_COORD[X] += dx
+		# TEST_COORD[Y] += dy
+		# TEST_COORD[Z] += dz
+		TEST_COORD = [GRAPH_X, GRAPH_Y[CNT_Y], GRAPH_Z[CNT_Z]]
+		rospy.loginfo(f'**\t>> CNT_Y : {CNT_Y}, CNT_Z : {CNT_Z}')
+		if CNT_Z == LEN - 1:
+			TEST = False
+		elif CNT_Y == LEN - 1:
+			CNT_Y = 0
+			CNT_Z += 1
+		else:
+			CNT_Y += 1
+
 		coord_for_car = TEST_COORD
-		
 		rospy.loginfo(f'**\t>> Object position(to car) : ({TEST_COORD[X]:.2f}, {TEST_COORD[Y]:.2f}, {TEST_COORD[Z]:.2f})')
+	
 	elif DEBUG:
 		rospy.loginfo(f'**\t>> Object position(to car) : ({msg.position[X]:.2f}, {msg.position[Y]:.2f}, {msg.position[Z]:.2f})')
-
 	coord_for_servo1 = rotate_coord_for_servo1(coord_for_car)		# 헤드램프 전체 좌표계에 맞게 회전한 좌표
 	coord_for_servo2 = rotate_coord_for_servo2(coord_for_servo1)	# 2번 서보모터의 좌표계에 맞게 회전한 좌표(2번 서보모터 각도 계산에만 사용)
 
@@ -214,7 +234,7 @@ def target_callback(msg: Object) -> None:
 	angle_pub = rospy.Publisher('joint_states', JointState, queue_size=1)
 	marker = make_test_point_marker(coord_for_car)
 	marker_pub = rospy.Publisher('/headlamp/test_coord', Marker, queue_size=10)
-	rate = rospy.Rate(10)
+	rate = rospy.Rate(1)
 	
 	angle.header.frame_id = ''
 	angle.header.stamp = rospy.Time.now()

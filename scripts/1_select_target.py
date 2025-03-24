@@ -44,7 +44,8 @@ def get_nearest_obj(objs: list) -> Object:
 	"""
 	nearest_obj = None
 	min_distance = float('inf')
-	person_objs = [obj for obj in objs if (obj.label == "Person")]	# 사람 객체만 필터링
+	#person_objs = [obj for obj in objs if (obj.label == "Person")]	# 사람 객체만 필터링
+	person_objs = objs
 	if DEBUG:
 		rospy.loginfo(f'*\t>> person_objs : {[obj.instance_id for obj in person_objs]}')
 		rospy.loginfo(f'*\t>> each objs position : {[obj.position for obj in person_objs]}')

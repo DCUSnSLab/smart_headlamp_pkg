@@ -8,8 +8,9 @@
 
 	<!-- Custom Node Start -->
 	<node name="select_target" pkg="smart_headlamp_pkg" type="1_select_target.py" output="screen"/>
-	<node name="calculate_angle" pkg="smart_headlamp_pkg" type="2_calculate_angle.py" output="screen"/>
-	<node name="point_with_arm" pkg="smart_headlamp_pkg" type="3_point_with_arm.py" output="screen"/>
+	<node name="calculate_angle" pkg="smart_headlamp_pkg" type="2_calculate_angle.py"/>
+	<node name="point_with_arm" pkg="smart_headlamp_pkg" type="3_point_with_arm.py"/>
+	<!--<node name="get_marker_end_point" pkg="smart_headlamp_pkg" type="0_get_point_coord.py" output="screen"/>-->
 
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 	<!--<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>-->
