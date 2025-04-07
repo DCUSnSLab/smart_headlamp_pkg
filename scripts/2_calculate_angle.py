@@ -10,8 +10,8 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import JointState
 
-NORM_DEBUG = False
-DEBUG = False		## 디버그 모드
+NORM_DEBUG = True
+DEBUG = True		## 디버그 모드
 
 TEST = False		## 테스트 모드
 TEST_COORD = [0, 0, 0]
@@ -148,16 +148,16 @@ def normalize_radian_angle_for_servo(j1: float, j2: float, coord: list) -> list:
 			rospy.loginfo(f'**\t>> Angle2 : {-normalized_angles[JOINT2]} -> {normalized_angles[JOINT2]}')
 
 	## 서보모터 1의 회전 가능 범위인 (-half_pi ~ half_pi)를 벗어난 경우
-	# if normalized_angles[JOINT1] > HALF_PI:
-	# 	normalized_angles[JOINT1] -= PI
-	# 	normalized_angles[JOINT2] *= -1
-	# 	if NORM_DEBUG:
-	# 		rospy.loginfo(f'**\t>> (j1 > 1.57) Original angle : ({j1:.2f}, {-normalized_angles[JOINT2]:.2f}) -> ({normalized_angles[JOINT1]:.2f}, {normalized_angles[JOINT2]:.2f})')
-	# elif normalized_angles[JOINT1] < -HALF_PI:
-	# 	normalized_angles[JOINT1] += PI
-	# 	normalized_angles[JOINT2] *= -1
-	# 	if NORM_DEBUG:
-	# 		rospy.loginfo(f'**\t>> (j1 < -1.57) Original angle : ({j1:.2f}, {-normalized_angles[JOINT2]:.2f}) -> ({normalized_angles[JOINT1]:.2f}, {normalized_angles[JOINT2]:.2f})')
+	if normalized_angles[JOINT1] > HALF_PI:
+		normalized_angles[JOINT1] -= PI
+		normalized_angles[JOINT2] *= -1
+		if NORM_DEBUG:
+			rospy.loginfo(f'**\t>> (j1 > 1.57) Original angle : ({j1:.2f}, {-normalized_angles[JOINT2]:.2f}) -> ({normalized_angles[JOINT1]:.2f}, {normalized_angles[JOINT2]:.2f})')
+	elif normalized_angles[JOINT1] < -HALF_PI:
+		normalized_angles[JOINT1] += PI
+		normalized_angles[JOINT2] *= -1
+		if NORM_DEBUG:
+			rospy.loginfo(f'**\t>> (j1 < -1.57) Original angle : ({j1:.2f}, {-normalized_angles[JOINT2]:.2f}) -> ({normalized_angles[JOINT1]:.2f}, {normalized_angles[JOINT2]:.2f})')
 
 	return normalized_angles
 
@@ -175,6 +175,47 @@ def make_test_point_marker(coord: list) -> Marker:
 	marker.action = Marker.ADD
 	
 	marker.color = ColorRGBA(1.0, 0.0, 0.0, 1.0)
+	marker.scale.x = 0.1
+	marker.scale.y = 0.1
+
+	point = Point()
+	point.x = coord[X]
+	point.y = coord[Y]
+	point.z = coord[Z]
+	marker.points.append(point)
+
+	marker.header.stamp = rospy.Time.now()
+	return marker
+
+def make_any_point_marker(coord: list, frame: str, color: str) -> Marker:
+	"""
+	지정 마커를 반환하는 함수
+	"""
+	marker = Marker()
+	if frame == "BASE":
+		marker.header.frame_id = "base_link"
+	elif frame == "SERVO1":
+		marker.header.frame_id = "link1"
+	elif frame == "SERVO2":
+		marker.header.frame_id = "link2"
+	else:
+		marker.header.frame_id = "map"
+
+	marker.header.stamp = rospy.Time.now()
+	marker.ns = "test_coord"
+	marker.id = 0
+	marker.type = Marker.POINTS
+	marker.action = Marker.ADD
+	
+	if color == "RED":
+		marker.color = ColorRGBA(1.0, 0.0, 0.0, 1.0)
+	elif color == "GREEN":
+		marker.color = ColorRGBA(0.0, 1.0, 0.0, 1.0)
+	elif color == "BLUE":
+		marker.color = ColorRGBA(0.0, 0.0, 1.0, 1.0)
+	else:
+		marker.color = ColorRGBA(1.0, 1.0, 0.0, 1.0)
+
 	marker.scale.x = 0.1
 	marker.scale.y = 0.1
 
@@ -234,7 +275,7 @@ def target_callback(msg: Object) -> None:
 	angle_pub = rospy.Publisher('joint_states', JointState, queue_size=1)
 	marker = make_test_point_marker(coord_for_car)
 	marker_pub = rospy.Publisher('/headlamp/test_coord', Marker, queue_size=10)
-	rate = rospy.Rate(1)
+	rate = rospy.Rate(10)
 	
 	angle.header.frame_id = ''
 	angle.header.stamp = rospy.Time.now()
@@ -247,14 +288,24 @@ def target_callback(msg: Object) -> None:
 	joint2 = math.atan2(coord_for_servo2[Y], coord_for_servo2[X])
 
 	angle.position = normalize_radian_angle_for_servo(joint1, joint2, coord_for_car)	# JointState의 position은 라디안 단위
+	angle.position[JOINT2] *= 1.0
 	angle.name = ['joint1', 'joint2']
 
 	if DEBUG:
 		rospy.loginfo(f'**\t>> Joint1 angle(RA) : {angle.position[JOINT1]:.2f}') 
 		rospy.loginfo(f'**\t>> Joint2 angle(RA) : {angle.position[JOINT2]:.2f}')
+		rospy.loginfo(f'**\t>> Joint2 angle(DE+90) : {math.degrees(angle.position[JOINT2])+90:.2f}')
 	
 	#if TEST:
 	marker_pub.publish(marker)
+
+	m1 = make_any_point_marker(coord_for_servo1, "SERVO1", "BLUE")
+	m1_pub = rospy.Publisher('/headlamp/servo1_coord', Marker, queue_size=10)
+	m2 = make_any_point_marker(coord_for_servo2, "SERVO2", "GREEN")
+	m2_pub = rospy.Publisher('/headlamp/servo2_coord', Marker, queue_size=10)
+
+	#m1_pub.publish(m1)
+	#m2_pub.publish(m2)
 
 	angle_pub.publish(angle)
 	rate.sleep()

@@ -25,12 +25,12 @@ def angle_callback(msg: JointState) -> None:
 			rospy.loginfo(f'***\t>> Move !')
 		last_processed_time = current_time
 		servo_angle_list = [math.degrees(msg.position[SERVO1]) + 90, math.degrees(msg.position[SERVO2]) + 90]
-		sbus.Arm_serial_servo_write(2, servo_angle_list[SERVO2], 50)
-		sbus.Arm_serial_servo_write(1, servo_angle_list[SERVO1], 100)
+		sbus.Arm_serial_servo_write(2, servo_angle_list[SERVO2], 10)
+		sbus.Arm_serial_servo_write(1, servo_angle_list[SERVO1], 10)
 
 		if DEBUG: 
 			rospy.loginfo(f'***\t>> Servo write(DE) : {servo_angle_list[SERVO1]}, {servo_angle_list[SERVO2]}')
-			#rospy.loginfo(f'***\t>> Servo read(DE) : {sbus.Arm_serial_servo_read(1)}, {sbus.Arm_serial_servo_read(2)}')
+			rospy.loginfo(f'***\t>> Servo read(DE) : {sbus.Arm_serial_servo_read(1)}, {sbus.Arm_serial_servo_read(2)}')
 
 
 if __name__ == '__main__':

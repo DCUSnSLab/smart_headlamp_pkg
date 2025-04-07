@@ -8,7 +8,7 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA
 
 
-DEBUG = True	## 디버그 모드
+DEBUG = False	## 디버그 모드
 EGO_POSITION = (0, 0, 0)
 g_tgt_id = -1	## id는 Object의 필드 instance_id를 의미
 X = 0
@@ -113,8 +113,12 @@ def objects_callback(msg: ObjectsStamped) -> None:
 	
 	if g_tgt_id in id_list:	# 타겟이 시야 범위 안에 계속 존재하는 경우
 		target = get_obj_by_id(objs_list, g_tgt_id)
+		rospy.loginfo(f'*\t>> \tTarget id : {g_tgt_id}')
 	else:
 		## 타겟이 정해지지 않았거나 타겟이 시야에서 사라진 경우
+		rospy.loginfo(f'*\t>> *************************************')
+		rospy.loginfo(f'*\t>> \tTarget Disappeared !')
+		rospy.loginfo(f'*\t>> *************************************')
 		target = get_nearest_obj(objs_list)
 		g_tgt_id = target.instance_id
 
