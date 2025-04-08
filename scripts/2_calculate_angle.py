@@ -54,6 +54,8 @@ def calculate_angles(coord: list) -> list:
 	따라서 서보모터의 각도 범위인 -HALF_PI에서 HALF_PI에 맞추려면 atan2의 반환값에 HALF_PI를 빼줘야 함.
 	반드시 이 계산이 끝난 후에 서보모터3의 반전(change_angles_for_each_servo 함수)을 수행할 것.
 	"""
+	if DEBUG:
+		rospy.loginfo(f'**\t>> Original angle(before change) : ({math.atan2(coord[Z], coord[Y])-HALF_PI:.2f}, {math.atan2(coord[Z], coord[X])-HALF_PI:.2f})')
 	return [math.atan2(coord[Z], coord[Y])-HALF_PI, math.atan2(coord[Z], coord[X])-HALF_PI]
 
 
@@ -65,7 +67,9 @@ def change_angles_for_each_servo(angles: list) -> list:
 	----------
 	서보모터3만 부호 반전시켜주면 됨. 서보모터2는 값 건드리지 말 것.
 	"""
-	return [-angles[JOINT2], angles[JOINT3]]
+	if False:
+		rospy.loginfo(f'**\t>> Final angle(changed) : ({angles[JOINT2]:.2f}, {-angles[JOINT3]:.2f})')
+	return [angles[JOINT2], -angles[JOINT3]]
 
 
 def target_callback(msg: Object) -> None:
