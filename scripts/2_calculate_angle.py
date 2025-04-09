@@ -29,16 +29,26 @@ def rotate_coord_for_arm(coord: list) -> list:
 
 	Note
 	----------
-	Z, X, Y 순서로 회전
+	원본 좌표의 X값을 변환된 좌표의 Z값으로,
+	원본 좌표의 Z값에 -1을 곱한 값을 변환된 좌표의 X값으로 설정.
+	변환된 좌표의 Z값이(원본 좌표의 X값이) 0 미만인 경우, 0.01로 설정.
 	"""
 	
-	R_y = np.array([[np.cos(PI), 0, np.sin(PI)],
-				 	[0, 1, 0], 
-					[-np.sin(PI), 0, np.cos(PI)]])
-	orig = np.array(coord)
-	rotated = R_y @ orig
+	# R_y = np.array([[np.cos(PI), 0, np.sin(PI)],
+	# 			 	[0, 1, 0], 
+	# 				[-np.sin(PI), 0, np.cos(PI)]])
+	# orig = np.array(coord)
+	# rotated = R_y @ orig
 
-	return rotated.tolist()
+	rotated = []
+	rotated[Z] = coord[X]
+	rotated[Y] = coord[Y]
+	rotated[X] = -coord[Z]
+
+	if rotated[Z] <= 0.00: rotated[Z] = 0.01
+
+	# return rotated.tolist()
+	return rotated
 
 
 def calculate_angles(coord: list) -> list:
