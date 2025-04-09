@@ -6,7 +6,7 @@ import Arm_Lib
 from sensor_msgs.msg import JointState
 
 
-DEBUG = True	## 디버그 모드
+DEBUG = False	## 디버그 모드
 SERVO2 = 0
 SERVO3 = 1
 sbus = Arm_Lib.Arm_Device()
@@ -20,13 +20,13 @@ def angle_callback(msg: JointState) -> None:
 	global last_processed_time
 	current_time = rospy.get_time()
 
-	if current_time - last_processed_time >= 0.5 or True:
+	if current_time - last_processed_time >= 0.01:
 		if DEBUG:
 			rospy.loginfo(f'***\t>> Move !')
 		last_processed_time = current_time
 		servo_angle_list = [math.degrees(msg.position[SERVO2]) + 90, math.degrees(msg.position[SERVO3]) + 90]
-		sbus.Arm_serial_servo_write(2, servo_angle_list[SERVO2], 100)
-		sbus.Arm_serial_servo_write(3, servo_angle_list[SERVO3], 100)
+		sbus.Arm_serial_servo_write(2, servo_angle_list[SERVO2], 10)
+		#sbus.Arm_serial_servo_write(3, servo_angle_list[SERVO3], 10)
 
 		if DEBUG: 
 			rospy.loginfo(f'***\t>> Servo write(DE) : {servo_angle_list[SERVO2]}, {servo_angle_list[SERVO3]}')
