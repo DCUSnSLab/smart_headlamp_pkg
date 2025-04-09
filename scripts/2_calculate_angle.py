@@ -40,10 +40,10 @@ def rotate_coord_for_arm(coord: list) -> list:
 	# orig = np.array(coord)
 	# rotated = R_y @ orig
 
-	rotated = []
-	rotated[Z] = coord[X]
-	rotated[Y] = coord[Y]
+	rotated = [0, 0, 0]
 	rotated[X] = -coord[Z]
+	rotated[Y] = coord[Y]
+	rotated[Z] = coord[X]
 
 	if rotated[Z] <= 0.00: rotated[Z] = 0.01
 
