@@ -10,21 +10,12 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import JointState
 
-NORM_DEBUG = True
 DEBUG = True		## 디버그 모드
-
 TEST = False		## 테스트 모드
 TEST_COORD = [0, 0, 0]
 
-LEN = 21
-CNT_Y = 0
-CNT_Z = 0
-GRAPH_X = 1.0
-GRAPH_Y = np.arange(-1.0, 1.1, 0.1)
-GRAPH_Z = np.arange(-1.0, 1.1, 0.1)
-
-JOINT1 = 0
-JOINT2 = 1
+JOINT2 = 0
+JOINT3 = 1
 X = 0
 Y = 1
 Z = 2
@@ -32,201 +23,63 @@ HALF_PI = (1.00 / 2.00) * math.pi
 PI = math.pi
 
 
-def amplify_coord(coord: list) -> list:
+def rotate_coord_for_arm(coord: list) -> list:
 	"""
-	소수점 2번째 자리까지는 유의미한 변화를 보이지 않는 좌표의 원활한 기울기 계산을 위해 값을 100배 키워주는 함수
-	높이가 0보다 낮은 경우(객체가 땅바닥을 뚫은 경우) 증폭 후 높이를 0.5로 초기화
-	"""
-	coord_100x = []
-	
-	for c in coord:
-		coord_100x.append(c * 100.00)
-
-
-	if coord[Z] <= 0.0:
-		coord_100x[Z] = 0.5
-
-	return coord_100x
-
-
-def rotate_coord_for_servo1(coord: list, r=90, p=0, y=90) -> list:
-	"""
-	헤드램프 전체(1번 서보모터)를 위해 3차원 좌표를 Yaw(Z축) -90도, Roll(X축) -90도만큼 변환(판때기가 위쪽으로 옴)하는 함수
-
-	Fields
-	----------
-	rotation_matrix
-		base_link_to_dofbot_base_link(=joint1)의 <rpy="-1.5708 0 -1.5708"> 에 맞게 회전시키는 행렬
+	헤드램프 전체를 위해 3차원 카메라 기준 좌표를 반시계방향으로 Y축 기준 180도 회전하는 함수
 
 	Note
 	----------
-	뒤집어서 ZYX(ypr) 순서로 +90, 0, +90 회전인가 본데?(행렬 곱하는 건 rpy 순서)
-	"XYZ순으로 회전행렬을 곱하게 되면, Z->Y->X 순대로 회전을 한다" 라네요
+	원본 좌표의 X값을 변환된 좌표의 Z값으로,
+	원본 좌표의 Z값에 -1을 곱한 값을 변환된 좌표의 X값으로 설정.
+	변환된 좌표의 Z값이(원본 좌표의 X값이) 0 미만인 경우, 0.01로 설정.
 	"""
-	roll = np.radians(r)
-	pitch = np.radians(p)
-	yaw = np.radians(y)
-
-	R_roll = np.array([[1, 0, 0], [0, np.cos(roll), -np.sin(roll)], [0, np.sin(roll), np.cos(roll)]])
-	R_pitch = np.array([[np.cos(pitch), 0, np.sin(pitch)], [0, 1, 0], [-np.sin(pitch), 0, np.cos(pitch)]])
-	R_yaw = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
 	
-	rotation_matrix = R_roll @ R_pitch @ R_yaw
-	#orig = np.array(amplify_coord(coord))
-	orig = np.array(coord)
-	rotated = rotation_matrix @ orig
+	# R_y = np.array([[np.cos(PI), 0, np.sin(PI)],
+	# 			 	[0, 1, 0], 
+	# 				[-np.sin(PI), 0, np.cos(PI)]])
+	# orig = np.array(coord)
+	# rotated = R_y @ orig
 
-	return rotated.tolist()
+	rotated = [0, 0, 0]
+	rotated[X] = -coord[Z]
+	rotated[Y] = coord[Y]
+	rotated[Z] = coord[X]
+
+	if rotated[Z] <= 0.00: rotated[Z] = 0.01
+
+	# return rotated.tolist()
+	return rotated
 
 
-def rotate_coord_for_servo2(coord: list, r=0, p=-90, y=0) -> list:
+def calculate_angles(coord: list) -> list:
 	"""
-	2번 서보모터를 위해 3차원 좌표를 Pitch(Y축) +90도만큼 변환하는 함수
-
-	Fields
-	----------
-	rotation_matrix
-		joint2의 <rpy="0 1.5708 0"> 에 맞게 회전시키는 행렬
+	헤드램프 좌표계에 맞게 변환된 3차원 좌표를 역탄젠트 연산하여 각도(라디안)로 변환하는 함수
 
 	Note
 	----------
-	그럼 얘도 뒤집어서 ZYX(ypr) 순서로 0, -90, 0 회전이냐? 그런 듯
+	math.atan2(y, x) 순서임. 파라미터 순서 헷갈리지 말 것.
+	서보모터2의 좌표계는 가로 Y축, 세로 Z축이므로 파라미터를 (Z, Y) 순서로 넣으면 되고,
+	서보모터3의 좌표계는 가로 X축, 세로 Z축이므로 파라미터를 (Z, X) 순서로 넣으면 됨.
+	좌표가 1, 2사분면에 속할 때 atan2의 반환값 범위는 0에서 PI일 것(추정).
+	따라서 서보모터의 각도 범위인 -HALF_PI에서 HALF_PI에 맞추려면 atan2의 반환값에 HALF_PI를 빼줘야 함.
+	반드시 이 계산이 끝난 후에 서보모터3의 반전(change_angles_for_each_servo 함수)을 수행할 것.
 	"""
-	roll = np.radians(r)
-	pitch = np.radians(p)
-	yaw = np.radians(y)
-
-	R_roll = np.array([[1, 0, 0], [0, np.cos(roll), -np.sin(roll)], [0, np.sin(roll), np.cos(roll)]])
-	R_pitch = np.array([[np.cos(pitch), 0, np.sin(pitch)], [0, 1, 0], [-np.sin(pitch), 0, np.cos(pitch)]])
-	R_yaw = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
-	
-	rotation_matrix = R_roll @ R_pitch @ R_yaw
-	orig = np.array(coord)
-	rotated = rotation_matrix @ orig
-
-	return rotated.tolist()
+	if DEBUG:
+		rospy.loginfo(f'**\t>> Original angle(before change) : ({math.atan2(coord[Z], coord[Y])-HALF_PI:.2f}, {math.atan2(coord[Z], coord[X])-HALF_PI:.2f})')
+	return [math.atan2(coord[Z], coord[Y])-HALF_PI, math.atan2(coord[Z], coord[X])-HALF_PI]
 
 
-def normalize_radian_angle_for_servo(j1: float, j2: float, coord: list) -> list:
+def change_angles_for_each_servo(angles: list) -> list:
 	"""
-	입력된 두 각도(-π와 π 사이의 값)를 각 서보모터가 회전할 수 있는 범위의 각도로 정규화하는 함수
+	일반적인 2차원 좌표계에 맞추어 계산된 두 각도(라디안)를 각 서보모터의 회전각 범위에 맞게 변환하는 함수
 
-	Parameters
+	Note
 	----------
-	j1
-		회전 가능 범위를 벗어난 경우 반대 방향을 가리키도록 반바퀴를 더하고/빼고 j2를 반전
-	j2
-		회전 가능 범위를 벗어난 경우 회전 가능 최댓값/최솟값으로 지정
+	서보모터3만 부호 반전시켜주면 됨. 서보모터2는 값 건드리지 말 것.
 	"""
-	normalized_angles = [j1, j2]
-	g_coord = np.array(coord).tolist()
-
-	## 서보모터 2의 회전 가능 범위인 (-half_pi ~ -pi) + pi와 (half_pi ~ pi) - pi를 벗어난 경우
-	if -HALF_PI < normalized_angles[JOINT2] < 0:
-		if NORM_DEBUG:
-			rospy.loginfo(f'**\t>> (-1.57 < j2 < 0) j2({normalized_angles[JOINT2]:.2f}) => -1.57')
-		normalized_angles[JOINT2] = -HALF_PI
-	elif 0 < normalized_angles[JOINT2] < HALF_PI:
-		if NORM_DEBUG:
-			rospy.loginfo(f'**\t>> (0 < j2 < 1.57) j2({normalized_angles[JOINT2]:.2f}) => 1.57')
-		normalized_angles[JOINT2] = HALF_PI
-
-	## 서보모터 2의 회전각 일반화(-half_pi ~ half_pi)
-	if -PI <= normalized_angles[JOINT2] < -HALF_PI:
-		normalized_angles[JOINT2] += PI
-		if NORM_DEBUG:
-			rospy.loginfo(f'**\t>> (-3.14 <= j2 < -1.57) -> j2({normalized_angles[JOINT2]-PI:.2f}) + PI => {normalized_angles[JOINT2]:.2f}')
-	elif HALF_PI < normalized_angles[JOINT2] <= PI:
-		normalized_angles[JOINT2] -= PI
-		if NORM_DEBUG:
-			rospy.loginfo(f'**\t>> (1.57 < j2 <= 3.14) -> j2({normalized_angles[JOINT2]+PI:.2f}) - PI => {normalized_angles[JOINT2]:.2f}')
-
-	## 180도 뒤집힌 방향을 가리키는 버그 발생
-	if g_coord[Z] > 0:
-		normalized_angles[JOINT2] *= -1
-		if NORM_DEBUG:
-			rospy.loginfo(f'**\t>> Angle2 : {-normalized_angles[JOINT2]} -> {normalized_angles[JOINT2]}')
-
-	## 서보모터 1의 회전 가능 범위인 (-half_pi ~ half_pi)를 벗어난 경우
-	if normalized_angles[JOINT1] > HALF_PI:
-		normalized_angles[JOINT1] -= PI
-		normalized_angles[JOINT2] *= -1
-		if NORM_DEBUG:
-			rospy.loginfo(f'**\t>> (j1 > 1.57) Original angle : ({j1:.2f}, {-normalized_angles[JOINT2]:.2f}) -> ({normalized_angles[JOINT1]:.2f}, {normalized_angles[JOINT2]:.2f})')
-	elif normalized_angles[JOINT1] < -HALF_PI:
-		normalized_angles[JOINT1] += PI
-		normalized_angles[JOINT2] *= -1
-		if NORM_DEBUG:
-			rospy.loginfo(f'**\t>> (j1 < -1.57) Original angle : ({j1:.2f}, {-normalized_angles[JOINT2]:.2f}) -> ({normalized_angles[JOINT1]:.2f}, {normalized_angles[JOINT2]:.2f})')
-
-	return normalized_angles
-
-
-def make_test_point_marker(coord: list) -> Marker:
-	"""
-	테스트 모드에서 테스트 좌표를 마커(점)으로 반환하는 함수
-	"""
-	marker = Marker()
-	marker.header.frame_id = "base_link"
-	marker.header.stamp = rospy.Time.now()
-	marker.ns = "test_coord"
-	marker.id = 0
-	marker.type = Marker.POINTS
-	marker.action = Marker.ADD
-	
-	marker.color = ColorRGBA(1.0, 0.0, 0.0, 1.0)
-	marker.scale.x = 0.1
-	marker.scale.y = 0.1
-
-	point = Point()
-	point.x = coord[X]
-	point.y = coord[Y]
-	point.z = coord[Z]
-	marker.points.append(point)
-
-	marker.header.stamp = rospy.Time.now()
-	return marker
-
-def make_any_point_marker(coord: list, frame: str, color: str) -> Marker:
-	"""
-	지정 마커를 반환하는 함수
-	"""
-	marker = Marker()
-	if frame == "BASE":
-		marker.header.frame_id = "base_link"
-	elif frame == "SERVO1":
-		marker.header.frame_id = "link1"
-	elif frame == "SERVO2":
-		marker.header.frame_id = "link2"
-	else:
-		marker.header.frame_id = "map"
-
-	marker.header.stamp = rospy.Time.now()
-	marker.ns = "test_coord"
-	marker.id = 0
-	marker.type = Marker.POINTS
-	marker.action = Marker.ADD
-	
-	if color == "RED":
-		marker.color = ColorRGBA(1.0, 0.0, 0.0, 1.0)
-	elif color == "GREEN":
-		marker.color = ColorRGBA(0.0, 1.0, 0.0, 1.0)
-	elif color == "BLUE":
-		marker.color = ColorRGBA(0.0, 0.0, 1.0, 1.0)
-	else:
-		marker.color = ColorRGBA(1.0, 1.0, 0.0, 1.0)
-
-	marker.scale.x = 0.1
-	marker.scale.y = 0.1
-
-	point = Point()
-	point.x = coord[X]
-	point.y = coord[Y]
-	point.z = coord[Z]
-	marker.points.append(point)
-
-	marker.header.stamp = rospy.Time.now()
-	return marker
+	if False:
+		rospy.loginfo(f'**\t>> Final angle(changed) : ({angles[JOINT2]:.2f}, {-angles[JOINT3]:.2f})')
+	return [angles[JOINT2], -angles[JOINT3]]
 
 
 def target_callback(msg: Object) -> None:
@@ -239,42 +92,18 @@ def target_callback(msg: Object) -> None:
 	coord_for_car = msg.position
 
 	if TEST:
-		# dx = rd.randint(-5, 5) * 0.03
-		# dy = rd.randint(-5, 5) * 0.03
-		# dz = rd.randint(-5, 5) * 0.01
-		# rospy.loginfo(f'**\t>> Random Value : dx={dx:.2f}, dy={dy:.2f}, dz={dz:.2f}')
-		# TEST_COORD[X] += dx
-		# TEST_COORD[Y] += dy
-		# TEST_COORD[Z] += dz
-		TEST_COORD = [GRAPH_X, GRAPH_Y[CNT_Y], GRAPH_Z[CNT_Z]]
-		rospy.loginfo(f'**\t>> CNT_Y : {CNT_Y}, CNT_Z : {CNT_Z}')
-		if CNT_Z == LEN - 1:
-			TEST = False
-		elif CNT_Y == LEN - 1:
-			CNT_Y = 0
-			CNT_Z += 1
-		else:
-			CNT_Y += 1
-
 		coord_for_car = TEST_COORD
 		rospy.loginfo(f'**\t>> Object position(to car) : ({TEST_COORD[X]:.2f}, {TEST_COORD[Y]:.2f}, {TEST_COORD[Z]:.2f})')
-	
 	elif DEBUG:
 		rospy.loginfo(f'**\t>> Object position(to car) : ({msg.position[X]:.2f}, {msg.position[Y]:.2f}, {msg.position[Z]:.2f})')
-	coord_for_servo1 = rotate_coord_for_servo1(coord_for_car)		# 헤드램프 전체 좌표계에 맞게 회전한 좌표
-	coord_for_servo2 = rotate_coord_for_servo2(coord_for_servo1)	# 2번 서보모터의 좌표계에 맞게 회전한 좌표(2번 서보모터 각도 계산에만 사용)
+
+	coord_for_arm = rotate_coord_for_arm(coord_for_car)		# 헤드램프 전체 좌표계에 맞게 회전한 좌표
 
 	if DEBUG:
-		rospy.loginfo(f'**\t>> Object position(to arm) : ({coord_for_servo1[X]:.2f}, {coord_for_servo1[Y]:.2f}, {coord_for_servo1[Z]:.2f})')
-
-	if DEBUG:
-		rospy.loginfo(f'**\t>> Object position(to servo1) : ({coord_for_servo1[X]:.2f}, {coord_for_servo1[Y]:.2f}, {coord_for_servo1[Z]:.2f})')
-		rospy.loginfo(f'**\t>> Object position(to servo2) : ({coord_for_servo2[X]:.2f}, {coord_for_servo2[Y]:.2f}, {coord_for_servo2[Z]:.2f})')
+		rospy.loginfo(f'**\t>> Object position(to arm) : ({coord_for_arm[X]:.2f}, {coord_for_arm[Y]:.2f}, {coord_for_arm[Z]:.2f})')
 
 	angle = JointState()
 	angle_pub = rospy.Publisher('joint_states', JointState, queue_size=1)
-	marker = make_test_point_marker(coord_for_car)
-	marker_pub = rospy.Publisher('/headlamp/test_coord', Marker, queue_size=10)
 	rate = rospy.Rate(10)
 	
 	angle.header.frame_id = ''
@@ -282,30 +111,12 @@ def target_callback(msg: Object) -> None:
 	angle.velocity = []
 	angle.effort = []
 
-	# math.atan2(y, x) 함수가 반환하는 값의 범위는 -pi와 pi 사이
-	joint1 = math.atan2(-coord_for_servo1[X], coord_for_servo1[Y])
-	#joint2 = math.atan2(-coord_for_servo2[Y], -coord_for_servo2[X])	# Joint2의 XY좌표계는 (a, b) -> (-a, -b)
-	joint2 = math.atan2(coord_for_servo2[Y], coord_for_servo2[X])
-
-	angle.position = normalize_radian_angle_for_servo(joint1, joint2, coord_for_car)	# JointState의 position은 라디안 단위
-	angle.position[JOINT2] *= 1.0
-	angle.name = ['joint1', 'joint2']
+	angle.position = change_angles_for_each_servo(calculate_angles(coord_for_arm))	# JointState의 position은 라디안 단위(-HALF_PI에서 HALF_PI)
+	angle.name = ['joint2', 'joint3']
 
 	if DEBUG:
-		rospy.loginfo(f'**\t>> Joint1 angle(RA) : {angle.position[JOINT1]:.2f}') 
-		rospy.loginfo(f'**\t>> Joint2 angle(RA) : {angle.position[JOINT2]:.2f}')
-		rospy.loginfo(f'**\t>> Joint2 angle(DE+90) : {math.degrees(angle.position[JOINT2])+90:.2f}')
-	
-	#if TEST:
-	marker_pub.publish(marker)
-
-	m1 = make_any_point_marker(coord_for_servo1, "SERVO1", "BLUE")
-	m1_pub = rospy.Publisher('/headlamp/servo1_coord', Marker, queue_size=10)
-	m2 = make_any_point_marker(coord_for_servo2, "SERVO2", "GREEN")
-	m2_pub = rospy.Publisher('/headlamp/servo2_coord', Marker, queue_size=10)
-
-	#m1_pub.publish(m1)
-	#m2_pub.publish(m2)
+		rospy.loginfo(f'**\t>> Joint2 angle(RA) : {angle.position[JOINT2]:.2f}') 
+		rospy.loginfo(f'**\t>> Joint3 angle(RA) : {angle.position[JOINT3]:.2f}')
 
 	angle_pub.publish(angle)
 	rate.sleep()
