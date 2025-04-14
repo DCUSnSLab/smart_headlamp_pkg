@@ -19,14 +19,15 @@ def angle_callback(msg: JointState) -> None:
 	"""
 	global last_processed_time
 	current_time = rospy.get_time()
+	t = 100		# ms
 
-	if current_time - last_processed_time >= 0.01 or True:
+	if current_time - last_processed_time >= 0.1 or True:
 		if DEBUG:
 			rospy.loginfo(f'***\t>> Move !')
 		last_processed_time = current_time
 		servo_angle_list = [math.degrees(msg.position[SERVO2]) + 90, math.degrees(msg.position[SERVO3]) + 90]
-		sbus.Arm_serial_servo_write(2, servo_angle_list[SERVO2], 100)
-		sbus.Arm_serial_servo_write(3, servo_angle_list[SERVO3], 100)
+		sbus.Arm_serial_servo_write(2, servo_angle_list[SERVO2], t)
+		sbus.Arm_serial_servo_write(3, servo_angle_list[SERVO3], t)
 
 		# if DEBUG: 
 		# 	rospy.loginfo(f'***\t>> Servo write(DE) : {servo_angle_list[SERVO2]}, {servo_angle_list[SERVO3]}')
