@@ -9,6 +9,9 @@ from sensor_msgs.msg import JointState
 
 MIN_D = -90
 MAX_D = 90
+ANGLE_LIST_D = [0, 0, 0, 0, 0, 0]
+SERVO2 = 1
+SERVO3 = 2
 
 
 def move_only_one_servo() -> None:
@@ -33,6 +36,7 @@ def move_only_one_servo() -> None:
 
 def move_servos_continuously(rate: int):
 
+	global ANGLE_LIST_D
 	sbus = Arm_Lib.Arm_Device()
 	current_ang_d = MIN_D
 	t_ms = int(1000 / rate)
@@ -46,8 +50,11 @@ def move_servos_continuously(rate: int):
 		while True:
 			ang_d = current_ang_d + 90
 			print(f"*\tArm_serial_servo_write([2,3], {ang_d}, {t_ms})")
-			sbus.Arm_serial_servo_write(2, 0, t_ms)
-			sbus.Arm_serial_servo_write(3, ang_d, t_ms)
+			#sbus.Arm_serial_servo_write(2, ang_d, t_ms)
+			#sbus.Arm_serial_servo_write(3, ang_d, t_ms)
+			ANGLE_LIST_D[SERVO2] = ang_d
+			ANGLE_LIST_D[SERVO3] = ang_d
+			sbus.Arm_serial_servo_write6_array(ANGLE_LIST_D, t_ms)
 			current_ang_d += step
 			if current_ang_d > MAX_D:
 				step = -1
@@ -64,9 +71,7 @@ def move_servos_continuously(rate: int):
 		print("*\tTrying to reset servos...", flush=True)
 		try:
 			time.sleep(1)
-			sbus.Arm_serial_servo_write(2, 90, 100)
-			time.sleep(1)
-			sbus.Arm_serial_servo_write(3, 90, 100)
+			sbus.Arm_serial_servo_write6_array([0, 90, 90, 0, 0, 0], t_ms)
 			time.sleep(1)
 			print("*\tServos reset to 90 degrees.", flush=True)
 		except Exception as e:
