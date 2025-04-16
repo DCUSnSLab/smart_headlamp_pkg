@@ -46,7 +46,7 @@ def move_servos_continuously(rate: int):
 		while True:
 			ang_d = current_ang_d + 90
 			print(f"*\tArm_serial_servo_write([2,3], {ang_d}, {t_ms})")
-			#sbus.Arm_serial_servo_write(2, ang_d, t_ms)
+			sbus.Arm_serial_servo_write(2, 0, t_ms)
 			sbus.Arm_serial_servo_write(3, ang_d, t_ms)
 			current_ang_d += step
 			if current_ang_d > MAX_D:
