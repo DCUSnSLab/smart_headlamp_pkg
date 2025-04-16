@@ -7,6 +7,10 @@ import time
 from sensor_msgs.msg import JointState
 
 
+MIN_D = -90
+MAX_D = 90
+
+
 def move_only_one_servo() -> None:
 
 	sbus = Arm_Lib.Arm_Device()
@@ -26,8 +30,55 @@ def move_only_one_servo() -> None:
 
 	return
 
+
+def move_servos_continuously(rate: int):
+
+	sbus = Arm_Lib.Arm_Device()
+	current_ang_d = MIN_D
+	t_ms = int(1000 / rate)
+	slp_s = rate / 1000.00
+	step = 1
+	
+	try:
+		print("*\tIf you want to finish, Press Ctrl + C.")
+		print(f"*\tSTART ANGLE : {current_ang_d} | STEP : {step}")
+		print(f"*\tTIME : {t_ms} ms | SLEEP : {slp_s}")
+		while True:
+			ang_d = current_ang_d + 90
+			print(f"*\tArm_serial_servo_write([2,3], {ang_d}, {t_ms})")
+			#sbus.Arm_serial_servo_write(2, ang_d, t_ms)
+			sbus.Arm_serial_servo_write(3, ang_d, t_ms)
+			current_ang_d += step
+			if current_ang_d > MAX_D:
+				step = -1
+				current_ang_d = MAX_D + step
+			elif current_ang_d < MIN_D:
+				step = 1
+				current_ang_d = MIN_D + step
+			time.sleep(slp_s)
+
+	except KeyboardInterrupt:
+		print("*\tFINISH !")
+
+	finally:
+		print("*\tTrying to reset servos...", flush=True)
+		try:
+			time.sleep(1)
+			sbus.Arm_serial_servo_write(2, 90, 100)
+			time.sleep(1)
+			sbus.Arm_serial_servo_write(3, 90, 100)
+			time.sleep(1)
+			print("*\tServos reset to 90 degrees.", flush=True)
+		except Exception as e:
+			print(f"!\tFailed to reset servos: {e}", flush=True)
+
+	return
+
+
 if __name__ == '__main__':
-	move_only_one_servo()
+	move_servos_continuously(10)
+	# move_only_one_servo()
+
 	# rospy.init_node('servo_test')
 	# sbus = Arm_Lib.Arm_Device()
 	# angle = 90
