@@ -15,13 +15,13 @@ last_processed_time = 0	# 마지막으로 처리한 메시지의 시간
 
 def angle_callback(msg: JointState) -> None:
 	"""
-	전달받은 각 서보모터의 회전 각도만큼 실제 서보모터를 (0.5초마다) 움직이는 함수
+	전달받은 각 서보모터의 회전 각도만큼 실제 서보모터를 (1초에 10번) 움직이는 함수
 	"""
 	global last_processed_time
 	current_time = rospy.get_time()
 	t = 100		# ms
 
-	if current_time - last_processed_time >= 0.1 or True:
+	if current_time - last_processed_time >= 0.1:
 		if DEBUG:
 			rospy.loginfo(f'***\t>> Move !')
 		last_processed_time = current_time
