@@ -81,8 +81,8 @@ def move_servos_continuously(rate: int):
 
 
 if __name__ == '__main__':
-	move_servos_continuously(10)
-	# move_only_one_servo()
+	# move_servos_continuously(10)
+	move_only_one_servo()
 
 	# rospy.init_node('servo_test')
 	# sbus = Arm_Lib.Arm_Device()
