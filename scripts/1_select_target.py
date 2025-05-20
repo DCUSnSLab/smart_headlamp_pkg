@@ -16,6 +16,12 @@ Y = 1
 Z = 2
 
 
+def create_empty_object() -> Object:
+	ept_obj = Object()
+
+	return ept_obj
+
+
 def get_obj_by_id(objs: list, id: int) -> Object:
 	"""
 	Object 리스트에서 특정 instance_id에 해당하는 객체를 반환하는 함수
@@ -105,17 +111,23 @@ def objects_callback(msg: ObjectsStamped) -> None:
 	카메라가 인식한 객체 정보를 받아 차와의 거리 또는 직전의 타겟을 근거로 타겟을 설정하고 타겟 객체의 정보 및 가이드선을 발행하는 함수
 	"""
 	global g_tgt_id
+	tgt_pub = rospy.Publisher('/headlamp/target_object', Object, queue_size=1)
+	rate = rospy.Rate(10)
+
+	if len(msg.objects) == 0:	# 탐지된 객체가 없는 경우, 빈 객체를 발행하고 바로 종료
+		tgt_pub.publish(create_empty_object())
+		rate.sleep()
+		return
+
 	objs_list = msg.objects
 	id_list = [obj.instance_id for obj in objs_list]
 	target = None
-	tgt_pub = rospy.Publisher('/headlamp/target_object', Object, queue_size=1)
-	rate = rospy.Rate(10)
+
 	
 	if g_tgt_id in id_list:	# 타겟이 시야 범위 안에 계속 존재하는 경우
 		target = get_obj_by_id(objs_list, g_tgt_id)
 		rospy.loginfo(f'*\t>> \tTarget id : {g_tgt_id}')
-	else:
-		## 타겟이 정해지지 않았거나 타겟이 시야에서 사라진 경우
+	else:					# 타겟이 시야에서 사라졌지만 다른 객체는 탐지되는 경우, 현재 탐지되는 다른 객체들 중 가장 가까운 객체를 새 타겟으로 설정
 		rospy.loginfo(f'*\t>> *************************************')
 		rospy.loginfo(f'*\t>> \tTarget Disappeared !')
 		rospy.loginfo(f'*\t>> *************************************')
