@@ -88,20 +88,6 @@ def target_callback(msg: Object) -> None:
 	"""
 	## 테스트용 코드
 	global TEST, TEST_COORD, CNT_Y, CNT_Z, LEN
-
-	coord_for_car = msg.position
-
-	if TEST:
-		coord_for_car = TEST_COORD
-		rospy.loginfo(f'**\t>> Object position(to car) : ({TEST_COORD[X]:.2f}, {TEST_COORD[Y]:.2f}, {TEST_COORD[Z]:.2f})')
-	elif DEBUG:
-		rospy.loginfo(f'**\t>> Object position(to car) : ({msg.position[X]:.2f}, {msg.position[Y]:.2f}, {msg.position[Z]:.2f})')
-
-	coord_for_arm = rotate_coord_for_arm(coord_for_car)		# 헤드램프 전체 좌표계에 맞게 회전한 좌표
-
-	if DEBUG:
-		rospy.loginfo(f'**\t>> Object position(to arm) : ({coord_for_arm[X]:.2f}, {coord_for_arm[Y]:.2f}, {coord_for_arm[Z]:.2f})')
-
 	angle = JointState()
 	angle_pub = rospy.Publisher('joint_states', JointState, queue_size=1)
 	rate = rospy.Rate(10)
@@ -110,13 +96,14 @@ def target_callback(msg: Object) -> None:
 	angle.header.stamp = rospy.Time.now()
 	angle.velocity = []
 	angle.effort = []
-
-	angle.position = change_angles_for_each_servo(calculate_angles(coord_for_arm))	# JointState의 position은 라디안 단위(-HALF_PI에서 HALF_PI)
 	angle.name = ['joint2', 'joint3']
 
-	if DEBUG:
-		rospy.loginfo(f'**\t>> Joint2 angle(RA) : {angle.position[JOINT2]:.2f}') 
-		rospy.loginfo(f'**\t>> Joint3 angle(RA) : {angle.position[JOINT3]:.2f}')
+	if msg.instance_id == -1234:	# 빈 객체가 전달된 경우, 각도를 초기값으로 설정
+		angle.position = [0.0, 0.0]
+	else:
+		coord_for_car = msg.position
+		coord_for_arm = rotate_coord_for_arm(coord_for_car)		# 헤드램프 전체 좌표계에 맞게 회전한 좌표
+		angle.position = change_angles_for_each_servo(calculate_angles(coord_for_arm))	# JointState의 position은 라디안 단위(-HALF_PI에서 HALF_PI)
 
 	angle_pub.publish(angle)
 	rate.sleep()

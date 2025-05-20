@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20250520-0343-Experimental"
+	Name="Dofbot"
+	Generator="ctest-3.16.3"
+	CompilerName="/usr/bin/c++"
+	CompilerVersion="9.4.0"
+	OSName="Linux"
+	Hostname="Dofbot"
+	OSRelease="5.4.0-1122-raspi"
+	OSVersion="#134-Ubuntu SMP PREEMPT Fri Jan 17 12:48:32 UTC 2025"
+	OSPlatform="aarch64"
+	Is64Bits="1"
+	VendorString=""
+	VendorID="Unknown Manufacturer"
+	FamilyID="8"
+	ModelID="0"
+	ProcessorCacheSize="0"
+	NumberOfLogicalCPU="4"
+	NumberOfPhysicalCPU="1"
+	TotalVirtualMemory="0"
+	TotalPhysicalMemory="3791"
+	LogicalProcessorsPerPhysical="4"
+	ProcessorClockFrequency="0"
+	>
+	<Testing>
+		<StartDateTime>May 20 11:43 CST</StartDateTime>
+		<StartTestTime>1747712602</StartTestTime>
+		<TestList/>
+		<EndDateTime>May 20 11:43 CST</EndDateTime>
+		<EndTestTime>1747712602</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>
