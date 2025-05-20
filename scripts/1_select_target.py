@@ -5,7 +5,7 @@ import rospy
 from zed_interfaces.msg import ObjectsStamped, Object
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
-from std_msgs.msg import ColorRGBA
+from std_msgs.msg import ColorRGBA, Int32
 
 
 DEBUG = False	## 디버그 모드
@@ -14,6 +14,16 @@ g_tgt_id = -1	## id는 Object의 필드 instance_id를 의미
 X = 0
 Y = 1
 Z = 2
+
+
+def create_empty_object() -> Object:
+	emt_obj = Object()
+	emt_obj.instance_id = -1234
+	return emt_obj
+
+
+def get_distance_by_cm_with_object(obj: Object) -> int:
+	return int(math.sqrt(sum((ego - obj) ** 2 for ego, obj in zip(EGO_POSITION, obj.position))) * 100)
 
 
 def get_obj_by_id(objs: list, id: int) -> Object:
@@ -56,9 +66,7 @@ def get_nearest_obj(objs: list) -> Object:
 		rospy.loginfo(f'*\t>> front_person_objs : {[obj.instance_id for obj in front_person_objs]}')
 	
 	for obj in front_person_objs:
-		obj_position = (obj.position[0], obj.position[1], obj.position[2])
-		distance = math.sqrt(sum((ego - obj) ** 2 for ego, obj in zip(EGO_POSITION, obj_position)))
-
+		distance = get_distance_by_cm_with_object(obj)
 		if distance < min_distance:
 			min_distance = distance
 			nearest_obj = obj
@@ -105,17 +113,26 @@ def objects_callback(msg: ObjectsStamped) -> None:
 	카메라가 인식한 객체 정보를 받아 차와의 거리 또는 직전의 타겟을 근거로 타겟을 설정하고 타겟 객체의 정보 및 가이드선을 발행하는 함수
 	"""
 	global g_tgt_id
+	tgt_pub = rospy.Publisher('/headlamp/target_object', Object, queue_size=1)
+	dis_pub = rospy.Publisher('/human_distance', Int32, queue_size=1)
+	rate = rospy.Rate(10)
+
+	if len(msg.objects) == 0:	# 탐지된 객체가 없는 경우, 빈 객체와 유효하지 않은 거리값을 발행하고 바로 종료
+		g_tgt_id = -1
+		tgt_pub.publish(create_empty_object())
+		dis_pub.publish(-1234)
+		rate.sleep()
+		return
+
 	objs_list = msg.objects
 	id_list = [obj.instance_id for obj in objs_list]
 	target = None
-	tgt_pub = rospy.Publisher('/headlamp/target_object', Object, queue_size=1)
-	rate = rospy.Rate(10)
+
 	
 	if g_tgt_id in id_list:	# 타겟이 시야 범위 안에 계속 존재하는 경우
 		target = get_obj_by_id(objs_list, g_tgt_id)
 		rospy.loginfo(f'*\t>> \tTarget id : {g_tgt_id}')
-	else:
-		## 타겟이 정해지지 않았거나 타겟이 시야에서 사라진 경우
+	else:					# 타겟이 시야에서 사라졌지만 다른 객체는 탐지되는 경우, 현재 탐지되는 다른 객체들 중 가장 가까운 객체를 새 타겟으로 설정
 		rospy.loginfo(f'*\t>> *************************************')
 		rospy.loginfo(f'*\t>> \tTarget Disappeared !')
 		rospy.loginfo(f'*\t>> *************************************')
@@ -130,6 +147,7 @@ def objects_callback(msg: ObjectsStamped) -> None:
 
 	guide_pub.publish(draw_line(pnt))
 	tgt_pub.publish(target)
+	dis_pub.publish(get_distance_by_cm_with_object(target))
 	rate.sleep()
 	
 	

@@ -2,14 +2,18 @@
 <launch>
     <!-- Config Default Scripts and Nodes, DO NOT EDIT ! -->
 	<arg name="model" default="dofbot_for_headlamp.urdf"/>
-	<arg name="gui" default="false"/>
+	<arg name="gui" default="True"/>
 	<param name="robot_description" command="$(find xacro)/xacro --inorder $(find smart_headlamp_pkg)/urdf/$(arg model)"/>
 	<param name="use_gui" value="$(arg gui)"/>
 
 	<!-- Custom Node Start -->
-	<node name="select_target" pkg="smart_headlamp_pkg" type="1_select_target.py" output="screen"/>
+	<node name="select_target" pkg="smart_headlamp_pkg" type="1_select_target.py"/>
 	<node name="calculate_angle" pkg="smart_headlamp_pkg" type="2_calculate_angle.py"/>
-	<node name="point_with_arm" pkg="smart_headlamp_pkg" type="3_point_with_arm.py"/>
+	<node name="point_with_arm" pkg="smart_headlamp_pkg" type="3_point_with_arm.py" output="screen"/>
+	<node name="serial_node" pkg="rosserial_python" type="serial_node.py" output="screen">
+		<param name="port" value="/dev/ttyACM0"/>
+		<param name="baud" value="57600"/>
+	</node>
 	<!--<node name="get_marker_end_point" pkg="smart_headlamp_pkg" type="0_get_point_coord.py" output="screen"/>-->
 
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
