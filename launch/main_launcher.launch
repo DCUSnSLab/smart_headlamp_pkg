@@ -1,15 +1,12 @@
 <?xml version="1.0"?>
 <launch>
-
     <!-- 메인PC의 ZED카메라 실행 -->
-    <include file="$(find zed_wrapper)/launch/zed2i.launch">
-        <arg name="rviz" value="false"/>
-    </include>
+    <include file="$(find zed_wrapper)/launch/zed2i.launch"/>
 
     <!-- 라즈베리파이 설정 -->
     <machine name="dofbot" address="192.168.0.8" user="dofbot" env-loader="/home/dofbot/dofbot_ws/env.sh"/>
 
     <!-- 라즈베리파이의 smart_headlamp_pkg 실행 -->
     <include file="$(find smart_headlamp_pkg)/launch/start_headlamp.launch" machine="dofbot"/>
-    
+
 </launch>
